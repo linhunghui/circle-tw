@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ trip.name }} - 分享行程</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .share-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .share-info {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .info-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="share-header">
+        <h1><i class="fas fa-motorcycle"></i> {{ trip.name }}</h1>
+        <p>{{ trip.description or '機車環島行程' }}</p>
+    </div>
+
+    <div class="share-info">
+        <div class="info-card">
+            <h2><i class="fas fa-info-circle"></i> 行程資訊</h2>
+            <div class="stats">
+                <div class="stat-item">
+                    <i class="fas fa-road"></i>
+                    <div>
+                        <span class="stat-label">總距離</span>
+                        <span class="stat-value">{{ trip.total_distance }} km</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-calendar-days"></i>
+                    <div>
+                        <span class="stat-label">預計天數</span>
+                        <span class="stat-value">{{ trip.estimated_days }} 天</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <h2><i class="fas fa-route"></i> 路線點</h2>
+            <div class="waypoints-list">
+                {% for waypoint in trip.route_data %}
+                <div class="waypoint-item">
+                    <div class="waypoint-info">
+                        <div class="waypoint-name">{{ loop.index }}. {{ waypoint.name }}</div>
+                        <div class="waypoint-coords">{{ "%.4f"|format(waypoint.lat) }}, {{ "%.4f"|format(waypoint.lng) }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="info-card">
+            <div id="map" style="height: 500px; border-radius: 8px;"></div>
+        </div>
+    </div>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&language=zh-TW"></script>
+    <script>
+        const routeData = {{ trip.route_data | tojson }};
+        
+        function initMap() {
+            const map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 8,
+                center: { lat: routeData[0].lat, lng: routeData[0].lng }
+            });
+            
+            const directionsService = new google.maps.DirectionsService();
+            const directionsRenderer = new google.maps.DirectionsRenderer({
+                map: map,
+                polylineOptions: {
+                    strokeColor: '#667eea',
+                    strokeWeight: 5
+                }
+            });
+            
+            if (routeData.length >= 2) {
+                const origin = routeData[0];
+                const destination = routeData[routeData.length - 1];
+                const waypoints = routeData.slice(1, -1).map(wp => ({
+                    location: new google.maps.LatLng(wp.lat, wp.lng),
+                    stopover: true
+                }));
+                
+                directionsService.route({
+                    origin: new google.maps.LatLng(origin.lat, origin.lng),
+                    destination: new google.maps.LatLng(destination.lat, destination.lng),
+                    waypoints: waypoints,
+                    travelMode: google.maps.TravelMode.DRIVING
+                }, (result, status) => {
+                    if (status === 'OK') {
+                        directionsRenderer.setDirections(result);
+                    }
+                });
+            }
+        }
+        
+        window.addEventListener('load', initMap);
+    </script>
+</body>
+</html>

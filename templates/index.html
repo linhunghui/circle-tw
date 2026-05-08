@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>機車環島行程規劃</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 頂部導航 -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-motorcycle"></i> 機車環島規劃</h1>
+                <div class="header-actions">
+                    <button id="saveTrip" class="btn btn-primary">
+                        <i class="fas fa-save"></i> 儲存行程
+                    </button>
+                    <button id="loadTrips" class="btn btn-secondary">
+                        <i class="fas fa-folder-open"></i> 載入行程
+                    </button>
+                    <button id="exportPDF" class="btn btn-secondary" style="display:none;">
+                        <i class="fas fa-file-pdf"></i> 匯出PDF
+                    </button>
+                    <button id="shareTrip" class="btn btn-secondary" style="display:none;">
+                        <i class="fas fa-share-alt"></i> 分享
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主要內容區 -->
+        <div class="main-content">
+            <!-- 左側控制面板 -->
+            <aside class="sidebar">
+                <div class="panel">
+                    <h2><i class="fas fa-route"></i> 行程資訊</h2>
+                    
+                    <div class="form-group">
+                        <label for="travelMode">交通工具</label>
+                        <select id="travelMode" class="form-select">
+                            <option value="DRIVING">🚗 汽車</option>
+                            <option value="TWO_WHEELER" selected>🏍️ 白牌機車（普通重機）</option>
+                            <option value="HEAVY_MOTORCYCLE">🏍️ 紅黃牌機車（大型重機）</option>
+                            <option value="BICYCLING">🚴 自行車</option>
+                            <option value="WALKING">🚶 步行</option>
+                        </select>
+                        <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 0.25rem;">
+                            白牌機車會避開國道、快速道路等限制路段
+                        </small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tripName">行程名稱</label>
+                        <input type="text" id="tripName" placeholder="例：台灣環島七日遊">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tripDescription">行程描述</label>
+                        <textarea id="tripDescription" rows="3" placeholder="簡單描述你的環島計畫..."></textarea>
+                    </div>
+                    
+                    <div class="stats">
+                        <div class="stat-item">
+                            <i class="fas fa-road"></i>
+                            <div>
+                                <span class="stat-label">總距離</span>
+                                <span class="stat-value" id="totalDistance">0 km</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-calendar-days"></i>
+                            <div>
+                                <span class="stat-label">預計天數</span>
+                                <span class="stat-value" id="estimatedDays">0 天</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-clock"></i>
+                            <div>
+                                <span class="stat-label">騎行時數</span>
+                                <span class="stat-value" id="estimatedHours">0 小時</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-gas-pump"></i>
+                            <div>
+                                <span class="stat-label">預估油耗</span>
+                                <span class="stat-value" id="fuelCost">NT$ 0</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-wallet"></i>
+                            <div>
+                                <span class="stat-label">總費用</span>
+                                <span class="stat-value" id="totalCost">NT$ 0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2><i class="fas fa-map-marker-alt"></i> 路線點</h2>
+                    <div id="waypointsList" class="waypoints-list">
+                        <p class="empty-message">在地圖上點擊新增路線點</p>
+                    </div>
+                    <button id="clearWaypoints" class="btn btn-danger btn-block">
+                        <i class="fas fa-trash"></i> 清除所有路線點
+                    </button>
+                </div>
+
+                <div class="panel">
+                    <h2><i class="fas fa-calendar-alt"></i> 每日行程</h2>
+                    <div id="dailyPlansList" class="daily-plans-list">
+                        <p class="empty-message">新增至少 2 個路線點後可規劃每日行程</p>
+                    </div>
+                    <button id="planDailyTrips" class="btn btn-primary btn-block" style="display:none;">
+                        <i class="fas fa-calendar-plus"></i> 規劃每日行程
+                    </button>
+                </div>
+
+                <div class="panel">
+                    <h2><i class="fas fa-search"></i> 地點搜尋</h2>
+                    <div class="form-group">
+                        <input type="text" id="placeSearch" placeholder="搜尋地點（例：台北101）">
+                        <button id="searchPlace" class="btn btn-primary btn-block" style="margin-top: 0.5rem;">
+                            <i class="fas fa-search"></i> 搜尋並新增
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- 地圖區域 -->
+            <main class="map-container">
+                <div id="map"></div>
+                <div class="map-controls">
+                    <button id="centerMap" class="map-control-btn" title="回到台灣中心">
+                        <i class="fas fa-crosshairs"></i>
+                    </button>
+                    <button id="toggleTraffic" class="map-control-btn" title="顯示/隱藏路況">
+                        <i class="fas fa-traffic-light"></i>
+                    </button>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 儲存行程對話框 -->
+    <div id="saveModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>儲存行程</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>確定要儲存目前的行程嗎？</p>
+                <div class="form-group">
+                    <label>行程名稱：<span id="modalTripName"></span></label>
+                </div>
+                <div class="form-group">
+                    <label>總距離：<span id="modalDistance"></span></label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirmSave" class="btn btn-primary">確定儲存</button>
+                <button class="btn btn-secondary modal-close">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 載入行程對話框 -->
+    <div id="loadModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>載入行程</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="tripsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Google Maps API -->
+    <script>
+        // 定義 Google Maps 載入完成後的回調函數
+        function initializeMap() {
+            if (typeof initMap === 'function') {
+                initMap();
+            }
+        }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places&language=zh-TW&callback=initializeMap" async defer></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

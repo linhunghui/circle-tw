@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 測試頁面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .info { background: #d1ecf1; border-color: #bee5eb; }
+        #map {
+            width: 100%;
+            height: 400px;
+            margin: 20px 0;
+            border: 2px solid #ddd;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Google Maps API 診斷</h1>
+    
+    <div class="test-item info">
+        <strong>API Key:</strong> {{ google_maps_api_key[:20] }}...
+    </div>
+    
+    <div id="status" class="test-item">
+        <strong>狀態:</strong> 載入中...
+    </div>
+    
+    <div id="map"></div>
+    
+    <div id="console" class="test-item">
+        <strong>Console 訊息:</strong>
+        <pre id="consoleLog"></pre>
+    </div>
+    
+    <h2>測試項目</h2>
+    <div id="test1" class="test-item">1. Google Maps API 載入</div>
+    <div id="test2" class="test-item">2. 地圖初始化</div>
+    <div id="test3" class="test-item">3. Places API</div>
+    <div id="test4" class="test-item">4. Directions API</div>
+    
+    <script>
+        // 捕捉 console 訊息
+        const consoleLog = document.getElementById('consoleLog');
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        console.log = function(...args) {
+            consoleLog.textContent += args.join(' ') + '\n';
+            originalLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            consoleLog.textContent += 'ERROR: ' + args.join(' ') + '\n';
+            originalError.apply(console, args);
+        };
+        
+        // 測試 1: API 載入
+        window.addEventListener('load', function() {
+            if (typeof google !== 'undefined') {
+                document.getElementById('test1').className = 'test-item success';
+                document.getElementById('test1').innerHTML = '✅ 1. Google Maps API 載入成功';
+                console.log('Google Maps API 已載入');
+                
+                // 測試 2: 地圖初始化
+                try {
+                    const map = new google.maps.Map(document.getElementById('map'), {
+                        center: { lat: 25.0330, lng: 121.5654 },
+                        zoom: 12
+                    });
+                    document.getElementById('test2').className = 'test-item success';
+                    document.getElementById('test2').innerHTML = '✅ 2. 地圖初始化成功';
+                    console.log('地圖初始化成功');
+                    
+                    // 測試 3: Places API
+                    try {
+                        const service = new google.maps.places.PlacesService(map);
+                        document.getElementById('test3').className = 'test-item success';
+                        document.getElementById('test3').innerHTML = '✅ 3. Places API 可用';
+                        console.log('Places API 可用');
+                    } catch (e) {
+                        document.getElementById('test3').className = 'test-item error';
+                        document.getElementById('test3').innerHTML = '❌ 3. Places API 錯誤: ' + e.message;
+                        console.error('Places API 錯誤:', e);
+                    }
+                    
+                    // 測試 4: Directions API
+                    try {
+                        const directionsService = new google.maps.DirectionsService();
+                        document.getElementById('test4').className = 'test-item success';
+                        document.getElementById('test4').innerHTML = '✅ 4. Directions API 可用';
+                        console.log('Directions API 可用');
+                    } catch (e) {
+                        document.getElementById('test4').className = 'test-item error';
+                        document.getElementById('test4').innerHTML = '❌ 4. Directions API 錯誤: ' + e.message;
+                        console.error('Directions API 錯誤:', e);
+                    }
+                    
+                    document.getElementById('status').className = 'test-item success';
+                    document.getElementById('status').innerHTML = '<strong>狀態:</strong> ✅ 所有測試通過';
+                    
+                } catch (e) {
+                    document.getElementById('test2').className = 'test-item error';
+                    document.getElementById('test2').innerHTML = '❌ 2. 地圖初始化失敗: ' + e.message;
+                    console.error('地圖初始化失敗:', e);
+                    
+                    document.getElementById('status').className = 'test-item error';
+                    document.getElementById('status').innerHTML = '<strong>狀態:</strong> ❌ 測試失敗';
+                }
+            } else {
+                document.getElementById('test1').className = 'test-item error';
+                document.getElementById('test1').innerHTML = '❌ 1. Google Maps API 載入失敗';
+                console.error('Google Maps API 未載入');
+                
+                document.getElementById('status').className = 'test-item error';
+                document.getElementById('status').innerHTML = '<strong>狀態:</strong> ❌ API 未載入';
+            }
+        });
+        
+        // 捕捉 Google Maps API 錯誤
+        window.gm_authFailure = function() {
+            console.error('Google Maps API 認證失敗！請檢查 API Key');
+            document.getElementById('status').className = 'test-item error';
+            document.getElementById('status').innerHTML = '<strong>狀態:</strong> ❌ API Key 認證失敗';
+        };
+    </script>
+    
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places&language=zh-TW"></script>
+    
+    <hr>
+    <h2>解決方法</h2>
+    <div class="test-item info">
+        <h3>如果 API 載入失敗：</h3>
+        <ol>
+            <li>檢查 API Key 是否正確</li>
+            <li>確認已啟用以下 API：
+                <ul>
+                    <li>Maps JavaScript API</li>
+                    <li>Places API</li>
+                    <li>Directions API</li>
+                </ul>
+            </li>
+            <li>檢查 API Key 的應用程式限制：
+                <ul>
+                    <li>HTTP referrer 限制應包含 <code>localhost:8000</code></li>
+                    <li>或暫時設為「無」</li>
+                </ul>
+            </li>
+            <li>檢查 API 配額是否用完</li>
+        </ol>
+    </div>
+    
+    <a href="/" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background: #2563eb; color: white; text-decoration: none; border-radius: 5px;">返回主頁</a>
+</body>
+</html>

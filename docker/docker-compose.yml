@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  circle-tw:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: circle-tw-app
+    ports:
+      - "8000:8000"
+    volumes:
+      # 掛載資料庫目錄（持久化資料）
+      - trip-data:/app/data
+    environment:
+      # 從 .env 檔案讀取環境變數
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-here}
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY:-}
+    env_file:
+      - ../.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  trip-data:
+    driver: local

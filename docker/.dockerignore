@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+circle-tw/
+
+# 資料庫
+*.db
+*.sqlite
+*.sqlite3
+
+# 環境變數
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 文件
+*.md
+CHANGELOG.md
+README.md
+DEMO.md
+FEATURES.md
+QUICKSTART.md
+UPDATE_*.md
+BUGFIX_*.md
+WEATHER_*.md
+FEATURE_*.md
+HOTFIX_*.md
+
+# Git
+.git/
+.gitignore
+
+# Docker
+docker/
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# 其他
+.DS_Store
+*.log

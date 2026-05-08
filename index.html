@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>機車環島行程規劃</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places,geometry&language=zh-TW"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏍️ 機車環島行程規劃</h1>
+            <p class="subtitle">規劃你的完美環島之旅</p>
+        </header>
+
+        <div class="main-content">
+            <!-- 控制面板 -->
+            <div class="control-panel">
+                <div class="section">
+                    <h2>📍 路線規劃</h2>
+                    <div class="form-group">
+                        <label>出發地點</label>
+                        <input type="text" id="start-location" placeholder="輸入起點（例：台北車站）">
+                    </div>
+                    <div class="form-group">
+                        <label>途經地點</label>
+                        <div id="waypoints-container">
+                            <input type="text" class="waypoint-input" placeholder="途經地點 1">
+                        </div>
+                        <button id="add-waypoint" class="btn-secondary">+ 新增途經點</button>
+                    </div>
+                    <div class="form-group">
+                        <label>預計天數</label>
+                        <input type="number" id="trip-days" min="1" max="30" value="7" placeholder="環島天數">
+                    </div>
+                    <div class="form-group">
+                        <label>每日騎行時間（小時）</label>
+                        <input type="number" id="daily-hours" min="1" max="12" value="6" step="0.5">
+                    </div>
+                    <button id="plan-route" class="btn-primary">開始規劃路線</button>
+                </div>
+
+                <div class="section">
+                    <h2>🔍 顯示選項</h2>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" id="show-gas-stations" checked>
+                            <span>顯示加油站</span>
+                        </label>
+                        <label>
+                            <input type="checkbox" id="show-hotels" checked>
+                            <span>顯示住宿</span>
+                        </label>
+                        <label>
+                            <input type="checkbox" id="show-restaurants">
+                            <span>顯示餐廳</span>
+                        </label>
+                        <label>
+                            <input type="checkbox" id="show-attractions">
+                            <span>顯示景點</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="section" id="route-info" style="display: none;">
+                    <h2>📊 行程資訊</h2>
+                    <div class="info-card">
+                        <div class="info-item">
+                            <span class="info-label">總距離：</span>
+                            <span id="total-distance" class="info-value">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">預估總時間：</span>
+                            <span id="total-duration" class="info-value">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">每日平均距離：</span>
+                            <span id="daily-distance" class="info-value">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">建議休息次數：</span>
+                            <span id="rest-stops" class="info-value">-</span>
+                        </div>
+                    </div>
+                    <div id="daily-breakdown"></div>
+                </div>
+            </div>
+
+            <!-- 地圖區域 -->
+            <div class="map-container">
+                <div id="map"></div>
+                <div class="map-legend">
+                    <div class="legend-item">
+                        <span class="legend-icon gas">⛽</span>
+                        <span>加油站</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-icon hotel">🏨</span>
+                        <span>住宿</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-icon restaurant">🍴</span>
+                        <span>餐廳</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-icon attraction">📸</span>
+                        <span>景點</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">
+        <div class="spinner"></div>
+        <p>規劃中...</p>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
