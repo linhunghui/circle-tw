@@ -44,6 +44,9 @@ trips.db
 docker/data/
 *.tar.gz
 
+# 開發文件（不公開）
+docs/dev/
+
 # IDE
 .vscode/
 .idea/
