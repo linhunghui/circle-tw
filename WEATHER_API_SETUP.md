@@ -38,13 +38,9 @@
 
 ### 步驟 3：設定到專案
 1. 開啟專案根目錄的 `.env` 檔案
-2. 找到這一行：
-   ```
-   OPENWEATHER_API_KEY=your_openweather_api_key_here
-   ```
-3. 將 `your_openweather_api_key_here` 替換成你的 API Key：
+2. 找到OPENWEATHER_API_KEY將 `your_openweather_api_key_here` 替換成你的 API Key：
 
-4. 儲存檔案
+3. 儲存檔案
 
 ### 步驟 4：重新啟動伺服器
 ```bash
