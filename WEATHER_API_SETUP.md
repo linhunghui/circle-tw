@@ -34,7 +34,7 @@
 2. 選擇 **My API Keys**
 3. 你會看到一個預設的 API Key
 4. 或者點擊 **Generate** 建立新的 API Key
-5. 複製 API Key（格式類似：`a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6`）
+5. 複製 API Key（格式類似：`xxxxxxxxxxxxxxxxx`）
 
 ### 步驟 3：設定到專案
 1. 開啟專案根目錄的 `.env` 檔案
@@ -44,7 +44,7 @@
    ```
 3. 將 `your_openweather_api_key_here` 替換成你的 API Key：
    ```
-   OPENWEATHER_API_KEY=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
+   OPENWEATHER_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxx
    ```
 4. 儲存檔案
 
