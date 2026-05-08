@@ -43,9 +43,7 @@
    OPENWEATHER_API_KEY=your_openweather_api_key_here
    ```
 3. 將 `your_openweather_api_key_here` 替換成你的 API Key：
-   ```
-   OPENWEATHER_API_KEY=‘your_openweather_api_key_here’
-   ```
+
 4. 儲存檔案
 
 ### 步驟 4：重新啟動伺服器
