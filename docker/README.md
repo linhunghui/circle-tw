@@ -441,10 +441,38 @@ docker-compose build --no-cache
 docker-compose up -d
 ```
 
+### 使用重建腳本（推薦）
+```bash
+cd docker
+./rebuild.sh
+```
+
+### ⚠️ 重要提醒
+
+當應用程式的前端檔案（JavaScript、HTML、CSS）或後端檔案（Python）更新後，**必須重新建立 Docker 映像**才能看到變更。
+
+**為什麼？**
+- Docker 在建立映像時會複製檔案到容器中
+- 這些檔案在映像中是固定的
+- 更新主機上的檔案不會自動更新容器中的檔案
+
+**什麼時候需要重建？**
+- ✅ 更新 JavaScript 檔案（static/js/）
+- ✅ 更新 HTML 模板（templates/）
+- ✅ 更新 CSS 檔案（static/css/）
+- ✅ 更新 Python 檔案（app.py, config.py 等）
+- ✅ 更新 requirements.txt
+
+**什麼時候不需要重建？**
+- ❌ 只修改 .env 檔案（重啟即可：`docker-compose restart`）
+- ❌ 只修改 docker-compose.yml（重新 up 即可）
+
 ### 快速更新（不重建映像）
 ```bash
 docker-compose restart
 ```
+
+**注意**：這只會重啟容器，不會更新檔案！
 
 ---
 
