@@ -206,11 +206,22 @@ function calculateRoute() {
             const estimatedDays = Math.max(1, Math.ceil(distanceKm / 200));
             
             document.getElementById('totalDistance').textContent = `${distanceKm} km`;
-            document.getElementById('estimatedDays').textContent = `${estimatedDays} 天`;
+            
+            // 如果使用者沒有自訂天數，使用自動計算的天數
+            const daysElement = document.getElementById('estimatedDays');
+            if (!daysElement.dataset.userEdited) {
+                daysElement.textContent = estimatedDays;
+                daysElement.dataset.autoCalculated = estimatedDays;
+            }
+            
             document.getElementById('estimatedHours').textContent = `${durationHours} 小時`;
             
+            // 顯示編輯按鈕
+            document.getElementById('editDaysBtn').style.display = 'inline-block';
+            
             // 計算費用
-            calculateCost(parseFloat(distanceKm), estimatedDays);
+            const currentDays = parseInt(daysElement.textContent) || estimatedDays;
+            calculateCost(parseFloat(distanceKm), currentDays);
         }
     });
 }
@@ -361,10 +372,11 @@ function clearAllWaypoints() {
 function updateStats() {
     if (waypoints.length < 2) {
         document.getElementById('totalDistance').textContent = '0 km';
-        document.getElementById('estimatedDays').textContent = '0 天';
+        document.getElementById('estimatedDays').textContent = '0';
         document.getElementById('estimatedHours').textContent = '0 小時';
         document.getElementById('fuelCost').textContent = 'NT$ 0';
         document.getElementById('totalCost').textContent = 'NT$ 0';
+        document.getElementById('editDaysBtn').style.display = 'none';
     }
 }
 
@@ -1007,6 +1019,56 @@ async function checkWeatherForWaypoint(waypointIndex) {
     }
 }
 
+// 編輯天數
+function editDays() {
+    const daysElement = document.getElementById('estimatedDays');
+    const currentDays = parseInt(daysElement.textContent) || 1;
+    const autoCalculated = parseInt(daysElement.dataset.autoCalculated) || currentDays;
+    const totalDistance = parseFloat(document.getElementById('totalDistance').textContent) || 0;
+    
+    // 計算建議的最小和最大天數
+    const minDays = Math.max(1, Math.ceil(totalDistance / 300)); // 假設最多每天300km
+    const maxDays = Math.max(minDays, Math.ceil(totalDistance / 100)); // 假設最少每天100km
+    
+    const newDays = prompt(
+        `請輸入行程天數：\n\n` +
+        `總距離：${totalDistance} km\n` +
+        `系統建議：${autoCalculated} 天（每天約 ${(totalDistance / autoCalculated).toFixed(0)} km）\n` +
+        `建議範圍：${minDays} - ${maxDays} 天\n\n` +
+        `請輸入天數（1-30）：`,
+        currentDays
+    );
+    
+    if (newDays === null) {
+        return; // 使用者取消
+    }
+    
+    const days = parseInt(newDays);
+    
+    // 驗證輸入
+    if (isNaN(days) || days < 1 || days > 30) {
+        alert('請輸入有效的天數（1-30）');
+        return;
+    }
+    
+    // 更新天數
+    daysElement.textContent = days;
+    daysElement.dataset.userEdited = 'true';
+    
+    // 重新計算費用
+    calculateCost(totalDistance, days);
+    
+    // 提示使用者
+    const avgDistance = (totalDistance / days).toFixed(0);
+    if (days < minDays) {
+        alert(`⚠️ 注意：您設定的天數較少，平均每天需騎行 ${avgDistance} km，請評估體力負荷。`);
+    } else if (days > maxDays) {
+        alert(`✓ 您設定的天數較充裕，平均每天騎行 ${avgDistance} km，可以更輕鬆地享受旅程。`);
+    } else {
+        alert(`✓ 天數已更新為 ${days} 天，平均每天騎行 ${avgDistance} km。`);
+    }
+}
+
 // 顯示每日行程規劃對話框
 function showDailyPlanModal() {
     if (waypoints.length < 2) {
@@ -1014,9 +1076,27 @@ function showDailyPlanModal() {
         return;
     }
     
-    const estimatedDays = parseInt(document.getElementById('estimatedDays').textContent);
+    const daysElement = document.getElementById('estimatedDays');
+    const estimatedDays = parseInt(daysElement.textContent) || 1;
+    const isUserEdited = daysElement.dataset.userEdited === 'true';
+    const autoCalculated = parseInt(daysElement.dataset.autoCalculated) || estimatedDays;
     
     let html = '<div style="max-height: 400px; overflow-y: auto;">';
+    
+    // 顯示天數資訊
+    if (isUserEdited) {
+        html += `<p style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+            <i class="fas fa-info-circle"></i> 
+            使用自訂天數：<strong>${estimatedDays} 天</strong>
+            （系統建議：${autoCalculated} 天）
+        </p>`;
+    } else {
+        html += `<p style="background: #f0f0f0; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+            <i class="fas fa-calculator"></i> 
+            使用系統建議天數：<strong>${estimatedDays} 天</strong>
+        </p>`;
+    }
+    
     html += '<p>請為每一天選擇終點：</p>';
     
     for (let day = 1; day <= estimatedDays; day++) {

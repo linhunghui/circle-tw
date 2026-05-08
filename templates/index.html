@@ -73,7 +73,19 @@
                             <i class="fas fa-calendar-days"></i>
                             <div>
                                 <span class="stat-label">預計天數</span>
-                                <span class="stat-value" id="estimatedDays">0 天</span>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span class="stat-value">
+                                        <span id="estimatedDays">0</span> 天
+                                    </span>
+                                    <button 
+                                        id="editDaysBtn" 
+                                        class="btn btn-sm" 
+                                        onclick="editDays()"
+                                        style="padding: 0.25rem 0.5rem; font-size: 0.75rem; display: none;"
+                                        title="編輯天數">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div class="stat-item">
