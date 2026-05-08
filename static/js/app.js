@@ -216,9 +216,6 @@ function calculateRoute() {
             
             document.getElementById('estimatedHours').textContent = `${durationHours} 小時`;
             
-            // 顯示編輯按鈕
-            document.getElementById('editDaysBtn').style.display = 'inline-block';
-            
             // 計算費用
             const currentDays = parseInt(daysElement.textContent) || estimatedDays;
             calculateCost(parseFloat(distanceKm), currentDays);
@@ -236,9 +233,12 @@ function updateWaypointsList() {
     }
     
     list.innerHTML = waypoints.map((wp, index) => `
-        <div class="waypoint-item">
+        <div class="waypoint-item" draggable="true" data-index="${index}">
+            <div class="waypoint-drag-handle" style="cursor: move; padding: 0 0.5rem; color: #94a3b8;">
+                <i class="fas fa-grip-vertical"></i>
+            </div>
             <div class="waypoint-info">
-                <div class="waypoint-name">${wp.name}</div>
+                <div class="waypoint-name">${index + 1}. ${wp.name}</div>
                 <div class="waypoint-coords">${wp.lat.toFixed(4)}, ${wp.lng.toFixed(4)}</div>
             </div>
             <div class="waypoint-actions">
@@ -254,6 +254,111 @@ function updateWaypointsList() {
             </div>
         </div>
     `).join('');
+    
+    // 初始化拖拉功能
+    initDragAndDrop();
+}
+
+// 初始化拖拉排序功能
+function initDragAndDrop() {
+    const waypointItems = document.querySelectorAll('.waypoint-item');
+    let draggedItem = null;
+    let draggedIndex = null;
+    
+    waypointItems.forEach((item, index) => {
+        // 拖拉開始
+        item.addEventListener('dragstart', (e) => {
+            draggedItem = item;
+            draggedIndex = parseInt(item.dataset.index);
+            item.style.opacity = '0.5';
+            e.dataTransfer.effectAllowed = 'move';
+        });
+        
+        // 拖拉結束
+        item.addEventListener('dragend', (e) => {
+            item.style.opacity = '1';
+            draggedItem = null;
+            draggedIndex = null;
+        });
+        
+        // 拖拉經過
+        item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            if (draggedItem && draggedItem !== item) {
+                const rect = item.getBoundingClientRect();
+                const midpoint = rect.top + rect.height / 2;
+                
+                if (e.clientY < midpoint) {
+                    item.style.borderTop = '2px solid #3498db';
+                    item.style.borderBottom = '';
+                } else {
+                    item.style.borderTop = '';
+                    item.style.borderBottom = '2px solid #3498db';
+                }
+            }
+        });
+        
+        // 離開拖拉區域
+        item.addEventListener('dragleave', (e) => {
+            item.style.borderTop = '';
+            item.style.borderBottom = '';
+        });
+        
+        // 放下
+        item.addEventListener('drop', (e) => {
+            e.preventDefault();
+            item.style.borderTop = '';
+            item.style.borderBottom = '';
+            
+            if (draggedItem && draggedItem !== item) {
+                const dropIndex = parseInt(item.dataset.index);
+                
+                // 重新排序 waypoints 陣列
+                const draggedWaypoint = waypoints[draggedIndex];
+                waypoints.splice(draggedIndex, 1);
+                
+                // 計算新的插入位置
+                let newIndex = dropIndex;
+                if (draggedIndex < dropIndex) {
+                    newIndex = dropIndex;
+                }
+                
+                waypoints.splice(newIndex, 0, draggedWaypoint);
+                
+                // 更新標記
+                updateMarkers();
+                
+                // 更新列表
+                updateWaypointsList();
+                
+                // 重新計算路線
+                if (waypoints.length > 1) {
+                    calculateRoute();
+                }
+            }
+        });
+    });
+}
+
+// 更新地圖標記
+function updateMarkers() {
+    // 清除所有標記
+    markers.forEach(marker => marker.setMap(null));
+    markers = [];
+    
+    // 重新建立標記
+    waypoints.forEach((wp, index) => {
+        const marker = new google.maps.Marker({
+            position: new google.maps.LatLng(wp.lat, wp.lng),
+            map: map,
+            label: String(index + 1),
+            animation: google.maps.Animation.DROP,
+            title: wp.name
+        });
+        markers.push(marker);
+    });
 }
 
 // 搜尋特定路線點附近的地點
@@ -376,7 +481,6 @@ function updateStats() {
         document.getElementById('estimatedHours').textContent = '0 小時';
         document.getElementById('fuelCost').textContent = 'NT$ 0';
         document.getElementById('totalCost').textContent = 'NT$ 0';
-        document.getElementById('editDaysBtn').style.display = 'none';
     }
 }
 
@@ -1027,17 +1131,23 @@ function editDays() {
     const totalDistance = parseFloat(document.getElementById('totalDistance').textContent) || 0;
     
     // 計算建議的最小和最大天數
-    const minDays = Math.max(1, Math.ceil(totalDistance / 300)); // 假設最多每天300km
-    const maxDays = Math.max(minDays, Math.ceil(totalDistance / 100)); // 假設最少每天100km
+    const minDays = totalDistance > 0 ? Math.max(1, Math.ceil(totalDistance / 300)) : 1;
+    const maxDays = totalDistance > 0 ? Math.max(minDays, Math.ceil(totalDistance / 100)) : 30;
     
-    const newDays = prompt(
-        `請輸入行程天數：\n\n` +
-        `總距離：${totalDistance} km\n` +
-        `系統建議：${autoCalculated} 天（每天約 ${(totalDistance / autoCalculated).toFixed(0)} km）\n` +
-        `建議範圍：${minDays} - ${maxDays} 天\n\n` +
-        `請輸入天數（1-30）：`,
-        currentDays
-    );
+    let promptMessage = `請輸入行程天數：\n\n`;
+    
+    if (totalDistance > 0) {
+        promptMessage += `總距離：${totalDistance} km\n`;
+        promptMessage += `系統建議：${autoCalculated} 天（每天約 ${(totalDistance / autoCalculated).toFixed(0)} km）\n`;
+        promptMessage += `建議範圍：${minDays} - ${maxDays} 天\n\n`;
+    } else {
+        promptMessage += `尚未規劃路線\n`;
+        promptMessage += `您可以先設定預計天數\n\n`;
+    }
+    
+    promptMessage += `請輸入天數（1-30）：`;
+    
+    const newDays = prompt(promptMessage, currentDays);
     
     if (newDays === null) {
         return; // 使用者取消
@@ -1056,16 +1166,20 @@ function editDays() {
     daysElement.dataset.userEdited = 'true';
     
     // 重新計算費用
-    calculateCost(totalDistance, days);
-    
-    // 提示使用者
-    const avgDistance = (totalDistance / days).toFixed(0);
-    if (days < minDays) {
-        alert(`⚠️ 注意：您設定的天數較少，平均每天需騎行 ${avgDistance} km，請評估體力負荷。`);
-    } else if (days > maxDays) {
-        alert(`✓ 您設定的天數較充裕，平均每天騎行 ${avgDistance} km，可以更輕鬆地享受旅程。`);
+    if (totalDistance > 0) {
+        calculateCost(totalDistance, days);
+        
+        // 提示使用者
+        const avgDistance = (totalDistance / days).toFixed(0);
+        if (days < minDays) {
+            alert(`⚠️ 注意：您設定的天數較少，平均每天需騎行 ${avgDistance} km，請評估體力負荷。`);
+        } else if (days > maxDays) {
+            alert(`✓ 您設定的天數較充裕，平均每天騎行 ${avgDistance} km，可以更輕鬆地享受旅程。`);
+        } else {
+            alert(`✓ 天數已更新為 ${days} 天，平均每天騎行 ${avgDistance} km。`);
+        }
     } else {
-        alert(`✓ 天數已更新為 ${days} 天，平均每天騎行 ${avgDistance} km。`);
+        alert(`✓ 天數已設定為 ${days} 天。新增路線點後會自動計算距離和費用。`);
     }
 }
 

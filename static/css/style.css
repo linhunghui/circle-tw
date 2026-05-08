@@ -182,6 +182,29 @@ body {
     background: var(--bg-color);
     border-radius: 6px;
     border-left: 3px solid var(--primary-color);
+    cursor: move;
+    transition: all 0.2s ease;
+}
+
+.waypoint-item:hover {
+    background: #f8f9fa;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.waypoint-item.dragging {
+    opacity: 0.5;
+}
+
+.waypoint-drag-handle {
+    cursor: move;
+    padding: 0 0.5rem;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+}
+
+.waypoint-drag-handle:hover {
+    color: var(--primary-color);
 }
 
 .waypoint-info {
