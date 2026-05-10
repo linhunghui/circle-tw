@@ -65,6 +65,22 @@ def create_trip():
     ))
     
     trip_id = cursor.lastrowid
+    
+    # 儲存每日行程
+    daily_plans = data.get('daily_plans', [])
+    if daily_plans:
+        for plan in daily_plans:
+            cursor.execute('''
+                INSERT INTO daily_plans (trip_id, day_number, start_point, end_point, distance)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (
+                trip_id,
+                plan.get('day'),
+                plan.get('start'),
+                plan.get('end'),
+                plan.get('distance', 0)
+            ))
+    
     conn.commit()
     conn.close()
     
@@ -74,15 +90,29 @@ def create_trip():
 def get_trip(trip_id):
     """取得特定行程"""
     conn = get_db()
-    trip = conn.execute('SELECT * FROM trips WHERE id = ?', (trip_id,)).fetchone()
-    conn.close()
+    cursor = conn.cursor()
+    
+    # 取得行程基本資料
+    trip = cursor.execute('SELECT * FROM trips WHERE id = ?', (trip_id,)).fetchone()
     
     if trip is None:
+        conn.close()
         return jsonify({'error': '行程不存在'}), 404
     
     trip_dict = dict(trip)
     trip_dict['route_data'] = json.loads(trip_dict['route_data'])
     
+    # 取得每日行程
+    daily_plans = cursor.execute('''
+        SELECT day_number, start_point, end_point, distance 
+        FROM daily_plans 
+        WHERE trip_id = ? 
+        ORDER BY day_number
+    ''', (trip_id,)).fetchall()
+    
+    trip_dict['daily_plans'] = [dict(plan) for plan in daily_plans]
+    
+    conn.close()
     return jsonify(trip_dict)
 
 @app.route('/api/trips/<int:trip_id>', methods=['PUT'])

@@ -618,7 +618,8 @@ async function saveTrip() {
         description: tripDescription,
         route_data: waypoints,
         total_distance: totalDistance,
-        estimated_days: estimatedDays
+        estimated_days: estimatedDays,
+        daily_plans: window.currentDailyPlans || []  // 加入每日行程資料
     };
     
     try {
@@ -711,6 +712,18 @@ async function loadTrip(tripId) {
         trip.route_data.forEach(wp => {
             addWaypoint(new google.maps.LatLng(wp.lat, wp.lng), wp.name);
         });
+        
+        // 載入每日行程
+        if (trip.daily_plans && trip.daily_plans.length > 0) {
+            const dailyPlans = trip.daily_plans.map(plan => ({
+                day: plan.day_number,
+                start: plan.start_point,
+                end: plan.end_point,
+                distance: plan.distance,
+                duration: (plan.distance / 50).toFixed(1)  // 估算時間（假設平均速度50km/h）
+            }));
+            displayDailyPlans(dailyPlans);
+        }
         
         closeModals();
         alert('行程載入成功！');
@@ -1378,6 +1391,9 @@ async function calculateDailyDistances(plans) {
 
 // 顯示每日行程
 function displayDailyPlans(plans) {
+    // 儲存每日行程資料到全域變數，供儲存功能使用
+    window.currentDailyPlans = plans;
+    
     let html = '';
     let totalDistance = 0;
     let totalDuration = 0;
